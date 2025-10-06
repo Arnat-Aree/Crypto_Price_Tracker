@@ -3,10 +3,17 @@ from datetime import datetime
 from dotenv import load_dotenv
 from flask import Flask, render_template, redirect, url_for, flash, request
 
-from api_client import PriceFetcher
-from data_logger import DataLogger
-from trend_analyzer import TrendAnalyzer
-from alert_engine import AlertEngine
+# Support running as a package (gunicorn src.web:app) and as a script/tests
+try:
+    from .api_client import PriceFetcher
+    from .data_logger import DataLogger
+    from .trend_analyzer import TrendAnalyzer
+    from .alert_engine import AlertEngine
+except ImportError:  # fallback for direct script/tests
+    from api_client import PriceFetcher
+    from data_logger import DataLogger
+    from trend_analyzer import TrendAnalyzer
+    from alert_engine import AlertEngine
 
 
 ALIASES = {
