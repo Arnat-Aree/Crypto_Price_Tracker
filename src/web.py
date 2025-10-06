@@ -83,10 +83,13 @@ def create_app() -> Flask:
 
     @app.route("/fetch-log")
     def fetch_log():
-        prices = fetcher.fetch_prices(coins)
+        currency = request.args.get("currency", default_currency).lower()
+        user_coins = request.args.get("coins")
+        view_coins = coins if not user_coins else [normalize_coin_id(c) for c in user_coins.split(",") if c.strip()]
+        prices = fetcher.fetch_prices(view_coins, currency=currency)
         logger.save_price(prices)
-        flash("Fetched and logged prices.")
-        return redirect(url_for("index"))
+        flash(f"Fetched and logged prices for: {', '.join(view_coins)} ({currency.upper()}).")
+        return redirect(url_for("index", coins=",".join(view_coins), currency=currency))
 
     @app.route("/alert-check")
     def alert_check():
@@ -104,17 +107,20 @@ def create_app() -> Flask:
     @app.route("/sync-history")
     def sync_history():
         days = int(request.args.get("days", "7"))
+        currency = request.args.get("currency", default_currency).lower()
+        user_coins = request.args.get("coins")
+        view_coins = coins if not user_coins else [normalize_coin_id(c) for c in user_coins.split(",") if c.strip()]
         synced = []
-        for coin in coins:
+        for coin in view_coins:
             try:
-                hist = fetcher.fetch_market_chart(coin, days=days)
+                hist = fetcher.fetch_market_chart(coin, days=days, currency=currency)
                 logger.upsert_history(coin, hist)
                 synced.append(coin)
             except Exception as e:
                 flash(f"Failed to sync {coin}: {e}")
         if synced:
             flash(f"Synced {days}d history for: {', '.join(synced)}")
-        return redirect(url_for("index", days=days))
+        return redirect(url_for("index", days=days, coins=",".join(view_coins), currency=currency))
 
     # serve plot images from PLOTS_DIR
     from flask import send_from_directory
