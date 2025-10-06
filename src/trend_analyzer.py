@@ -3,7 +3,6 @@ from typing import Dict, Any
 
 import pandas as pd
 import matplotlib
-matplotlib.use("Agg")  # set backend immediately after importing matplotlib
 import matplotlib.pyplot as plt
 
 
@@ -29,6 +28,11 @@ class TrendAnalyzer:
     def plot_trend(self, coin: str) -> str:
         if not os.path.exists(self.prices_csv_path):
             raise FileNotFoundError(self.prices_csv_path)
+        # Defer backend selection here to avoid E402 and still ensure headless
+        try:
+            matplotlib.use("Agg")
+        except Exception:
+            pass
         df = self._load_coin_df(coin)
         if df.empty:
             raise ValueError(f"No data for coin: {coin}")
