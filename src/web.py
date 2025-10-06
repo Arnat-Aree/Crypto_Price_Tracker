@@ -61,11 +61,27 @@ def create_app() -> Flask:
 
         charts = {}
         kpis = {}
+        rate = 1.0
+        try:
+            rate = fetcher.get_usd_to(currency)
+        except Exception:
+            rate = 1.0
+
         for coin in view_coins:
             try:
                 series = analyzer.get_series(coin, days=days)
+                # Convert USD series to selected currency for display only
+                if currency != "usd" and rate != 1.0:
+                    def _mul(arr):
+                        return [round(x * rate, 4) if x is not None else None for x in arr]
+                    series["price"] = _mul(series.get("price", []))
+                    series["ma7"] = _mul(series.get("ma7", []))
+                    series["ma30"] = _mul(series.get("ma30", []))
                 charts[coin] = series
-                kpis[coin] = analyzer.get_kpis(coin)
+                kpi = analyzer.get_kpis(coin)
+                if currency != "usd" and rate != 1.0 and kpi.get("last_price") is not None:
+                    kpi["last_price"] = round(kpi["last_price"] * rate, 4)
+                kpis[coin] = kpi
             except Exception:
                 charts[coin] = {"labels": [], "price": [], "ma7": [], "ma30": [], "rsi14": []}
                 kpis[coin] = {"last_price": None, "change_pct_1d": None}
