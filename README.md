@@ -1,6 +1,6 @@
 # Crypto Price Tracker
 
-[![CI](https://github.com/USER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/USER/REPO/actions/workflows/ci.yml)
+[![CI](https://github.com/nattachaackahat/Crypto_Price_Tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/nattachaackahat/Crypto_Price_Tracker/actions/workflows/ci.yml)
 
 Lightweight, OOP-style crypto price tracker for data analysis using CoinGecko API. Saves daily prices to CSV, plots 7-day moving averages, and raises simple alerts on 10% drops.
 
@@ -17,7 +17,7 @@ Lightweight, OOP-style crypto price tracker for data analysis using CoinGecko AP
 ```bash
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
-cp .env.example .env
+cp env.example .env
 # CLI
 python src/app.py --fetch --log --plot --alert
 # Web GUI
@@ -68,5 +68,5 @@ src/
 bash scripts/ci_simulate.sh
 ```
 
-## Badge note
-- Replace `USER/REPO` in the badge URL with your GitHub org/repo name.
+## CI
+- GitHub Actions runs flake8 + pytest on pushes and PRs to `main`.
