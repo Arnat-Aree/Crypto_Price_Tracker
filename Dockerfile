@@ -28,4 +28,5 @@ ENV PORT=10000
 EXPOSE 10000
 
 # Default to gunicorn for production, bind to dynamic $PORT (Render)
-CMD ["bash", "-lc", "gunicorn -w 2 -b 0.0.0.0:${PORT:-10000} src.web:create_app()"]
+# Use --factory to call create_app without parentheses (avoids shell parse issues)
+CMD ["bash", "-lc", "gunicorn -w 2 -b 0.0.0.0:${PORT:-10000} --factory src.web:create_app"]
