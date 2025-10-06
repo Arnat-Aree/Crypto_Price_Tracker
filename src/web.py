@@ -73,6 +73,16 @@ def create_app() -> Flask:
                         series = analyzer.get_series(coin, days=days)
                         flash(f"Auto-synced {days}d history for {coin}.")
                     except Exception as e:
+                        # Graceful fallback: synthesize flat series from latest price so UI is never empty
+                        try:
+                            latest_map = fetcher.fetch_prices([coin], currency=currency)
+                            fallback = latest_map.get(coin)
+                        except Exception:
+                            fallback = None
+                        from datetime import date, timedelta
+                        labels = [(date.today() - timedelta(days=i)).isoformat() for i in reversed(range(days))]
+                        price = [fallback for _ in labels]
+                        series = {"labels": labels, "price": price, "ma7": price, "ma30": price, "rsi14": [50 for _ in labels]}
                         flash(f"Failed to load history for {coin}: {e}")
                 charts[coin] = series
                 kpis[coin] = analyzer.get_kpis(coin)
@@ -82,7 +92,7 @@ def create_app() -> Flask:
                 except Exception:
                     daily_extremes[coin] = {"min": None, "max": None}
             except Exception:
-                charts[coin] = {"labels": [], "price": [], "ma7": []}
+                charts[coin] = {"labels": [], "price": [], "ma7": [], "ma30": [], "rsi14": []}
                 kpis[coin] = {"last_price": None, "change_pct_1d": None}
 
         return render_template(
