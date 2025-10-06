@@ -27,6 +27,6 @@ ENV PORT=10000
 # EXPOSE is optional on Render; keeping 10000 as a hint
 EXPOSE 10000
 
-# Default to gunicorn for production, bind to dynamic $PORT (Render)
-# Use --factory to call create_app without parentheses (avoids shell parse issues)
-CMD ["bash", "-lc", "gunicorn -w 2 -b 0.0.0.0:${PORT:-10000} --factory src.web:create_app"]
+# Default entrypoint: start via script to honor $PORT and avoid factory flag
+RUN chmod +x scripts/start.sh
+CMD ["bash", "-lc", "scripts/start.sh"]
