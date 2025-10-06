@@ -34,6 +34,7 @@ class TrendAnalyzer:
         if df.empty:
             raise ValueError(f"No data for coin: {coin}")
         df["ma7"] = df["price"].rolling(window=7, min_periods=1).mean()
+        df["ma30"] = df["price"].rolling(window=30, min_periods=1).mean()
 
         os.makedirs(self.plots_dir, exist_ok=True)
         out_path = os.path.join(self.plots_dir, f"{coin}_trend.png")
@@ -41,6 +42,7 @@ class TrendAnalyzer:
         plt.figure(figsize=(8, 4))
         plt.plot(df.index, df["price"], label="Price", linewidth=1.5)
         plt.plot(df.index, df["ma7"], label="7d MA", linewidth=2)
+        plt.plot(df.index, df["ma30"], label="30d MA", linewidth=2)
         plt.title(f"{coin} - Price & 7d Moving Average")
         plt.xlabel("Date")
         plt.ylabel("USD")
@@ -51,17 +53,30 @@ class TrendAnalyzer:
         return out_path
 
     def get_series(self, coin: str, days: int = 30) -> Dict[str, Any]:
-        """Return time-series for Chart.js: labels and datasets (price, ma7)."""
+        """Return time-series for Chart.js: labels and datasets (price, ma7, ma30)."""
         df = self._load_coin_df(coin)
         if df.empty:
-            return {"labels": [], "price": [], "ma7": []}
+            return {"labels": [], "price": [], "ma7": [], "ma30": [], "rsi14": []}
         df = df.tail(days)
         df["ma7"] = df["price"].rolling(window=7, min_periods=1).mean()
+        df["ma30"] = df["price"].rolling(window=30, min_periods=1).mean()
+
+        # RSI(14)
+        prices = df["price"].astype(float)
+        delta = prices.diff()
+        up = delta.clip(lower=0)
+        down = (-delta).clip(lower=0)
+        roll_up = up.rolling(14, min_periods=1).mean()
+        roll_down = down.rolling(14, min_periods=1).mean()
+        rs = roll_up / roll_down.replace(0, float("inf"))
+        rsi14 = 100 - (100 / (1 + rs))
         labels = [d.strftime("%Y-%m-%d") for d in df.index]
         return {
             "labels": labels,
             "price": [round(float(x), 4) if pd.notna(x) else None for x in df["price"].tolist()],
             "ma7": [round(float(x), 4) if pd.notna(x) else None for x in df["ma7"].tolist()],
+            "ma30": [round(float(x), 4) if pd.notna(x) else None for x in df["ma30"].tolist()],
+            "rsi14": [round(float(x), 2) if pd.notna(x) else None for x in rsi14.tolist()],
         }
 
     def get_kpis(self, coin: str) -> Dict[str, Any]:
