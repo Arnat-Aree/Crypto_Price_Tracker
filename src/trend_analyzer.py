@@ -1,11 +1,10 @@
 import os
 from typing import Dict, Any
 
-# Force non-GUI backend for headless servers (e.g., Render)
+import pandas as pd
 import matplotlib
 matplotlib.use("Agg")
 import matplotlib.pyplot as plt
-import pandas as pd
 
 
 class TrendAnalyzer:
