@@ -68,7 +68,7 @@ def create_app() -> Flask:
                 # Auto-sync if series empty
                 if not series.get("labels"):
                     try:
-                        hist = fetcher.fetch_market_chart(coin, days=days)
+                        hist = fetcher.fetch_market_chart(coin, days=days, currency=currency)
                         logger.upsert_history(coin, hist)
                         series = analyzer.get_series(coin, days=days)
                         flash(f"Auto-synced {days}d history for {coin}.")
