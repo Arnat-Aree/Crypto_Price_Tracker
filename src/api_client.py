@@ -25,22 +25,33 @@ class PriceFetcher:
             payload = json.load(f)
         return {coin: float(payload.get(coin, 0.0)) for coin in coins}
 
-    @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=0.5, min=0.5, max=4))
-    def _fetch_live(self, coins: List[str]) -> Dict[str, float]:
+    @retry(
+        stop=stop_after_attempt(3),
+        wait=wait_exponential(multiplier=0.5, min=0.5, max=4),
+    )
+    def _fetch_live(self, coins: List[str], vs_currency: str) -> Dict[str, float]:
         ids = ",".join(coins)
         url = f"{self.base_url}/simple/price"
-        resp = requests.get(url, params={"ids": ids, "vs_currencies": "usd"}, timeout=10)
+        resp = requests.get(
+            url,
+            params={"ids": ids, "vs_currencies": vs_currency},
+            timeout=10,
+        )
         resp.raise_for_status()
         data = resp.json()  # e.g., {"bitcoin": {"usd": 12345.67}}
-        return {coin: float(data.get(coin, {}).get("usd", 0.0)) for coin in coins}
+        return {
+            coin: float(data.get(coin, {}).get(vs_currency, 0.0))
+            for coin in coins
+        }
 
-    def fetch_prices(self, coins: List[str]) -> Dict[str, float]:
+    def fetch_prices(self, coins: List[str], currency: str = "usd") -> Dict[str, float]:
         if not coins:
             return {}
+        vs_currency = currency.lower()
         if self.use_mock:
             return self._read_mock(coins)
         try:
-            return self._fetch_live(coins)
+            return self._fetch_live(coins, vs_currency)
         except Exception:
             # fallback to mock on error
             return self._read_mock(coins)
@@ -71,3 +82,26 @@ class PriceFetcher:
             d = datetime.utcfromtimestamp(ts_ms / 1000.0).date().isoformat()
             per_day[d] = float(price)  # keep last of the day
         return per_day
+
+    def fetch_today_min_max(self, coin: str, currency: str = "usd") -> Dict[str, float]:
+        """
+        Return today's min and max price for the given coin in the given currency.
+        For mock mode, returns the mock value as both min and max.
+        """
+        if self.use_mock:
+            value = self._read_mock([coin]).get(coin, 0.0)
+            return {"min": float(value), "max": float(value)}
+
+        url = f"{self.base_url}/coins/{coin}/market_chart"
+        resp = requests.get(
+            url,
+            params={"vs_currency": currency, "days": "1"},
+            timeout=15,
+        )
+        resp.raise_for_status()
+        payload = resp.json()
+        prices = payload.get("prices", [])  # list of [timestamp_ms, price]
+        if not prices:
+            return {"min": 0.0, "max": 0.0}
+        values = [float(p[1]) for p in prices]
+        return {"min": min(values), "max": max(values)}
