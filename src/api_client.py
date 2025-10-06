@@ -7,7 +7,12 @@ from tenacity import retry, stop_after_attempt, wait_exponential
 
 
 class PriceFetcher:
-    def __init__(self, base_url: str = "https://api.coingecko.com/api/v3", use_mock: bool = False, mock_path: str = "data/samples/mock_prices.json") -> None:
+    def __init__(
+        self,
+        base_url: str = "https://api.coingecko.com/api/v3",
+        use_mock: bool = False,
+        mock_path: str = "data/samples/mock_prices.json",
+    ) -> None:
         self.base_url = base_url.rstrip("/")
         self.use_mock = use_mock
         self.mock_path = mock_path
