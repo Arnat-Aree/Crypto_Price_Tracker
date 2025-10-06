@@ -4,6 +4,7 @@ from typing import Dict, List
 
 import requests
 from tenacity import retry, stop_after_attempt, wait_exponential
+import math
 
 
 class PriceFetcher:
@@ -63,13 +64,17 @@ class PriceFetcher:
         Returns dict: {date_iso: price} keeping the last price per day.
         """
         if self.use_mock:
-            # If in mock mode, synthesize a flat history from mock value
+            # If in mock mode, synthesize a varied history from mock value (non-flat)
             mock = self._read_mock([coin]).get(coin, 0.0)
+            base = mock or (60000.0 if coin == "bitcoin" else 3000.0 if coin == "ethereum" else 100.0)
             from datetime import date, timedelta
             out = {}
+            seed = (sum(ord(c) for c in coin) % 100) / 50.0
             for i in reversed(range(days)):
                 d = (date.today() - timedelta(days=i)).isoformat()
-                out[d] = mock
+                # +/-2% smooth oscillation
+                factor = 1.0 + 0.02 * math.sin(i * 0.7 + seed)
+                out[d] = base * factor
             return out
         try:
             url = f"{self.base_url}/coins/{coin}/market_chart"
@@ -86,13 +91,16 @@ class PriceFetcher:
                 return per_day
         except Exception:
             pass
-        # Fallback: synthesize flat history from current (mock) price to avoid empty UI
+        # Fallback: synthesize varied history to avoid flat UI
         mock = self._read_mock([coin]).get(coin, 0.0)
+        base = mock or (60000.0 if coin == "bitcoin" else 3000.0 if coin == "ethereum" else 100.0)
         from datetime import date, timedelta
         out = {}
+        seed = (sum(ord(c) for c in coin) % 100) / 50.0
         for i in reversed(range(days)):
             d = (date.today() - timedelta(days=i)).isoformat()
-            out[d] = mock
+            factor = 1.0 + 0.02 * math.sin(i * 0.7 + seed)
+            out[d] = base * factor
         return out
 
     def fetch_today_min_max(self, coin: str, currency: str = "usd") -> Dict[str, float]:
