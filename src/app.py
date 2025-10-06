@@ -3,10 +3,16 @@ import os
 import sys
 from dotenv import load_dotenv
 
-from api_client import PriceFetcher
-from data_logger import DataLogger
-from trend_analyzer import TrendAnalyzer
-from alert_engine import AlertEngine
+try:
+    from .api_client import PriceFetcher
+    from .data_logger import DataLogger
+    from .trend_analyzer import TrendAnalyzer
+    from .alert_engine import AlertEngine
+except ImportError:
+    from api_client import PriceFetcher
+    from data_logger import DataLogger
+    from trend_analyzer import TrendAnalyzer
+    from alert_engine import AlertEngine
 
 
 def ensure_dirs(paths):
