@@ -57,7 +57,7 @@ class PriceFetcher:
             return self._read_mock(coins)
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=0.5, min=0.5, max=4))
-    def fetch_market_chart(self, coin: str, days: int = 7) -> Dict[str, float]:
+    def fetch_market_chart(self, coin: str, days: int = 7, currency: str = "usd") -> Dict[str, float]:
         """
         Fetch historical prices for coin over N days.
         Returns dict: {date_iso: price} keeping the last price per day.
@@ -73,7 +73,7 @@ class PriceFetcher:
             return out
         try:
             url = f"{self.base_url}/coins/{coin}/market_chart"
-            resp = requests.get(url, params={"vs_currency": "usd", "days": str(days)}, timeout=15)
+            resp = requests.get(url, params={"vs_currency": currency, "days": str(days)}, timeout=15)
             resp.raise_for_status()
             payload = resp.json()
             prices = payload.get("prices", [])  # list of [timestamp_ms, price]
