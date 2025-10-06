@@ -1,7 +1,6 @@
 import argparse
 import os
 import sys
-from datetime import datetime
 from dotenv import load_dotenv
 
 from api_client import PriceFetcher
