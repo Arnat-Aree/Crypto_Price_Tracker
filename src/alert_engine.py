@@ -7,7 +7,11 @@ import pandas as pd
 
 
 class AlertEngine:
-    def __init__(self, prices_csv_path: str = "data/prices/crypto_prices.csv", alerts_json_path: str = "data/alerts/price_alerts.json") -> None:
+    def __init__(
+        self,
+        prices_csv_path: str = "data/prices/crypto_prices.csv",
+        alerts_json_path: str = "data/alerts/price_alerts.json",
+    ) -> None:
         self.prices_csv_path = prices_csv_path
         self.alerts_json_path = alerts_json_path
 
