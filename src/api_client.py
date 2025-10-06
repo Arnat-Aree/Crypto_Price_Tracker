@@ -112,15 +112,6 @@ class PriceFetcher:
             out[d] = base * factor
         return out
 
-    def fetch_today_min_max(self, coin: str, currency: str = "usd") -> Dict[str, float]:
-        """
-        Return today's min and max price for the given coin in the given currency.
-        For mock mode, returns the mock value as both min and max.
-        """
-        if self.use_mock:
-            value = self._read_mock([coin]).get(coin, 0.0)
-            return {"min": float(value), "max": float(value)}
-
     def get_usd_to(self, currency: str = "usd") -> float:
         """Return conversion factor to convert USD->currency. 1 for USD.
         Uses USDT (tether) as proxy when live; mock falls back to ~36 for THB.
@@ -138,22 +129,3 @@ class PriceFetcher:
             return float(data.get("tether", {}).get(cur, 1.0)) or 1.0
         except Exception:
             return 36.0 if cur == "thb" else 1.0
-
-        try:
-            url = f"{self.base_url}/coins/{coin}/market_chart"
-            resp = requests.get(
-                url,
-                params={"vs_currency": currency, "days": "1"},
-                timeout=15,
-            )
-            resp.raise_for_status()
-            payload = resp.json()
-            prices = payload.get("prices", [])  # list of [timestamp_ms, price]
-            if not prices:
-                raise ValueError("no prices")
-            values = [float(p[1]) for p in prices]
-            return {"min": min(values), "max": max(values)}
-        except Exception:
-            # Fallback to mock/current value to avoid empty UI
-            value = self._read_mock([coin]).get(coin, 0.0)
-            return {"min": float(value), "max": float(value)}
