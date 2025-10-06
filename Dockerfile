@@ -23,8 +23,9 @@ RUN mkdir -p data/prices data/alerts data/plots data/samples scripts src
 
 COPY . .
 
-ENV PORT=8000
-EXPOSE 8000
+ENV PORT=10000
+# EXPOSE is optional on Render; keeping 10000 as a hint
+EXPOSE 10000
 
-# Default to gunicorn for production
-CMD ["gunicorn", "-w", "2", "-b", "0.0.0.0:8000", "src.web:create_app()"]
+# Default to gunicorn for production, bind to dynamic $PORT (Render)
+CMD ["bash", "-lc", "gunicorn -w 2 -b 0.0.0.0:${PORT:-10000} src.web:create_app()"]
