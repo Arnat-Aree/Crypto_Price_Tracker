@@ -1,11 +1,20 @@
 # Crypto Price Tracker
 
+[![CI](https://github.com/USER/REPO/actions/workflows/ci.yml/badge.svg)](https://github.com/USER/REPO/actions/workflows/ci.yml)
+
 Lightweight, OOP-style crypto price tracker for data analysis using CoinGecko API. Saves daily prices to CSV, plots 7-day moving averages, and raises simple alerts on 10% drops.
+
+## Features
+- Fetch BTC/ETH prices (public API; no key required)
+- Daily CSV logging with upsert for historical data
+- Interactive web charts (Chart.js) with 7/30/90 day ranges
+- Alerts on 10% daily drop, saved to JSON
+- Dockerized + Render deploy (gunicorn)
+- Tests (pytest) + Lint (flake8) + CI (GitHub Actions)
 
 ## Quick Start (<= 10 minutes)
 
 ```bash
-# From repo root
 python3 -m venv .venv && source .venv/bin/activate
 pip install -r requirements.txt
 cp .env.example .env
@@ -17,11 +26,15 @@ python src/web.py
 
 Open Web GUI: `http://localhost:8000`
 
+## Environment
+- API_BASE_URL (default: CoinGecko v3)
+- USE_MOCK (true/false) – mock fallback when rate-limited
+- COINS – e.g., `bitcoin,ethereum`
+- PRICES_CSV, ALERTS_JSON, PLOTS_DIR
+
 ## Docker
 ```bash
-# Build image
 docker build -t crypto-price-tracker .
-# Run container (gunicorn server)
 docker run --rm -p 8000:8000 \
   -e API_BASE_URL="https://api.coingecko.com/api/v3" \
   -e USE_MOCK=false \
@@ -30,26 +43,24 @@ docker run --rm -p 8000:8000 \
   crypto-price-tracker
 ```
 
-Using docker-compose:
+Compose:
 ```bash
 docker compose up --build
 ```
 
-## Deploy to Render (Docker)
-1) Push repo to GitHub
-2) In Render dashboard → New → Web Service → Select repo → Environment: Docker
-3) Render will use `Dockerfile` and port `8000` automatically
-4) Set Environment Variables (optional overrides):
-   - `API_BASE_URL`, `USE_MOCK`, `COINS`, `PRICES_CSV`, `ALERTS_JSON`, `PLOTS_DIR`, `FLASK_SECRET_KEY`
-5) Click Deploy
+## Deploy to Render
+- Use Docker web service, or `render.yaml` blueprint.
+- Default command uses gunicorn: `src.web:create_app()` on port 8000.
 
-Alternatively, add `render.yaml` to the repo root and create via Blueprint. Render will provision using free plan by default (edit `plan` if needed).
-
-## Commands (CLI)
-```bash
-python src/app.py --fetch --log
-python src/app.py --plot
-python src/app.py --alert --threshold 0.10
+## Project Structure
+```
+src/
+  app.py            # CLI orchestrator
+  web.py            # Flask web app (Bootstrap + Chart.js)
+  api_client.py     # PriceFetcher (live + history)
+  data_logger.py    # DataLogger (append + upsert)
+  trend_analyzer.py # Series + KPIs + plotting
+  alert_engine.py   # Alerts 10% drop
 ```
 
 ## Tests & Lint
@@ -57,6 +68,5 @@ python src/app.py --alert --threshold 0.10
 bash scripts/ci_simulate.sh
 ```
 
-## Notes
-- Public CoinGecko API (no key) is used by default; enable `USE_MOCK=true` if rate-limited.
-- The web server runs with `gunicorn` in Docker/Render.
+## Badge note
+- Replace `USER/REPO` in the badge URL with your GitHub org/repo name.
