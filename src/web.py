@@ -36,6 +36,7 @@ def create_app() -> Flask:
     base_url = os.getenv("API_BASE_URL", "https://api.coingecko.com/api/v3")
     use_mock = os.getenv("USE_MOCK", "false").lower() == "true"
     coins = [normalize_coin_id(c) for c in os.getenv("COINS", "bitcoin,ethereum").split(",") if c.strip()]
+    default_currency = os.getenv("CURRENCY", "usd").lower()
     prices_csv = os.getenv("PRICES_CSV", "data/prices/crypto_prices.csv")
     alerts_json = os.getenv("ALERTS_JSON", "data/alerts/price_alerts.json")
     plots_dir = os.getenv("PLOTS_DIR", "data/plots")
@@ -49,15 +50,19 @@ def create_app() -> Flask:
     @app.route("/")
     def index():
         days = int(request.args.get("days", "30"))
+        currency = request.args.get("currency", default_currency).lower()
+        user_coins = request.args.get("coins")
+        view_coins = coins if not user_coins else [normalize_coin_id(c) for c in user_coins.split(",") if c.strip()]
         latest = None
         try:
-            latest = fetcher.fetch_prices(coins)
+            latest = fetcher.fetch_prices(view_coins, currency=currency)
         except Exception:
             latest = None
 
         charts = {}
         kpis = {}
-        for coin in coins:
+        daily_extremes = {}
+        for coin in view_coins:
             try:
                 series = analyzer.get_series(coin, days=days)
                 # Auto-sync if series empty
@@ -71,17 +76,24 @@ def create_app() -> Flask:
                         flash(f"Failed to load history for {coin}: {e}")
                 charts[coin] = series
                 kpis[coin] = analyzer.get_kpis(coin)
+                # Fetch today's min/max for selected currency
+                try:
+                    daily_extremes[coin] = fetcher.fetch_today_min_max(coin, currency=currency)
+                except Exception:
+                    daily_extremes[coin] = {"min": None, "max": None}
             except Exception:
                 charts[coin] = {"labels": [], "price": [], "ma7": []}
                 kpis[coin] = {"last_price": None, "change_pct_1d": None}
 
         return render_template(
             "index.html",
-            coins=coins,
+            coins=view_coins,
             latest=latest,
             charts=charts,
             kpis=kpis,
+            daily_extremes=daily_extremes,
             selected_days=days,
+            currency=currency,
             now=datetime.utcnow(),
         )
 
