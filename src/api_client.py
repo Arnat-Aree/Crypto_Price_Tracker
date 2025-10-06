@@ -50,12 +50,21 @@ class PriceFetcher:
             return {}
         vs_currency = currency.lower()
         if self.use_mock:
-            return self._read_mock(coins)
+            base = self._read_mock(coins)
+            if vs_currency == "usd":
+                return base
+            # simple mock conversion (approx.): USD->THB ~ 36
+            rate = 36.0 if vs_currency == "thb" else 1.0
+            return {k: float(v) * rate for k, v in base.items()}
         try:
             return self._fetch_live(coins, vs_currency)
         except Exception:
             # fallback to mock on error
-            return self._read_mock(coins)
+            base = self._read_mock(coins)
+            if vs_currency == "usd":
+                return base
+            rate = 36.0 if vs_currency == "thb" else 1.0
+            return {k: float(v) * rate for k, v in base.items()}
 
     @retry(stop=stop_after_attempt(3), wait=wait_exponential(multiplier=0.5, min=0.5, max=4))
     def fetch_market_chart(self, coin: str, days: int = 7, currency: str = "usd") -> Dict[str, float]:
@@ -111,6 +120,24 @@ class PriceFetcher:
         if self.use_mock:
             value = self._read_mock([coin]).get(coin, 0.0)
             return {"min": float(value), "max": float(value)}
+
+    def get_usd_to(self, currency: str = "usd") -> float:
+        """Return conversion factor to convert USD->currency. 1 for USD.
+        Uses USDT (tether) as proxy when live; mock falls back to ~36 for THB.
+        """
+        cur = currency.lower()
+        if cur == "usd":
+            return 1.0
+        if self.use_mock:
+            return 36.0 if cur == "thb" else 1.0
+        try:
+            url = f"{self.base_url}/simple/price"
+            resp = requests.get(url, params={"ids": "tether", "vs_currencies": cur}, timeout=8)
+            resp.raise_for_status()
+            data = resp.json()
+            return float(data.get("tether", {}).get(cur, 1.0)) or 1.0
+        except Exception:
+            return 36.0 if cur == "thb" else 1.0
 
         try:
             url = f"{self.base_url}/coins/{coin}/market_chart"
