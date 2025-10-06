@@ -61,36 +61,11 @@ def create_app() -> Flask:
 
         charts = {}
         kpis = {}
-        daily_extremes = {}
         for coin in view_coins:
             try:
                 series = analyzer.get_series(coin, days=days)
-                # Auto-sync if series empty
-                if not series.get("labels"):
-                    try:
-                        hist = fetcher.fetch_market_chart(coin, days=days, currency=currency)
-                        logger.upsert_history(coin, hist)
-                        series = analyzer.get_series(coin, days=days)
-                        flash(f"Auto-synced {days}d history for {coin}.")
-                    except Exception as e:
-                        # Graceful fallback: synthesize flat series from latest price so UI is never empty
-                        try:
-                            latest_map = fetcher.fetch_prices([coin], currency=currency)
-                            fallback = latest_map.get(coin)
-                        except Exception:
-                            fallback = None
-                        from datetime import date, timedelta
-                        labels = [(date.today() - timedelta(days=i)).isoformat() for i in reversed(range(days))]
-                        price = [fallback for _ in labels]
-                        series = {"labels": labels, "price": price, "ma7": price, "ma30": price, "rsi14": [50 for _ in labels]}
-                        flash(f"Failed to load history for {coin}: {e}")
                 charts[coin] = series
                 kpis[coin] = analyzer.get_kpis(coin)
-                # Fetch today's min/max for selected currency
-                try:
-                    daily_extremes[coin] = fetcher.fetch_today_min_max(coin, currency=currency)
-                except Exception:
-                    daily_extremes[coin] = {"min": None, "max": None}
             except Exception:
                 charts[coin] = {"labels": [], "price": [], "ma7": [], "ma30": [], "rsi14": []}
                 kpis[coin] = {"last_price": None, "change_pct_1d": None}
@@ -101,7 +76,6 @@ def create_app() -> Flask:
             latest=latest,
             charts=charts,
             kpis=kpis,
-            daily_extremes=daily_extremes,
             selected_days=days,
             currency=currency,
             now=datetime.utcnow(),
