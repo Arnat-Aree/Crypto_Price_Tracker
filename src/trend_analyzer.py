@@ -3,7 +3,7 @@ from typing import Dict, Any
 
 import pandas as pd
 import matplotlib
-matplotlib.use("Agg")
+matplotlib.use("Agg")  # set backend immediately after importing matplotlib
 import matplotlib.pyplot as plt
 
 
