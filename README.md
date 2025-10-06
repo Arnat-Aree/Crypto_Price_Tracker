@@ -1,8 +1,8 @@
 # Crypto Price Tracker
 
-[![CI](https://github.com/nattachaackahat/Crypto_Price_Tracker/actions/workflows/ci.yml/badge.svg)](https://github.com/nattachaackahat/Crypto_Price_Tracker/actions/workflows/ci.yml)
-
 Lightweight, OOP-style crypto price tracker for data analysis using CoinGecko API. Saves daily prices to CSV, plots 7-day moving averages, and raises simple alerts on 10% drops.
+
+**Websire:** https://crypto-price-tracker-xj94.onrender.com
 
 ## Features
 - Fetch BTC/ETH prices (public API; no key required)
