@@ -1,0 +1,22 @@
+services:
+  - type: web
+    name: crypto-price-tracker
+    env: docker
+    plan: free
+    autoDeploy: true
+    healthCheckPath: /
+    envVars:
+      - key: API_BASE_URL
+        value: https://api.coingecko.com/api/v3
+      - key: USE_MOCK
+        value: "false"
+      - key: COINS
+        value: bitcoin,ethereum
+      - key: PRICES_CSV
+        value: data/prices/crypto_prices.csv
+      - key: ALERTS_JSON
+        value: data/alerts/price_alerts.json
+      - key: PLOTS_DIR
+        value: data/plots
+      - key: FLASK_SECRET_KEY
+        generateValue: true

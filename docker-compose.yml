@@ -1,0 +1,24 @@
+version: '3.9'
+services:
+  web:
+    build: .
+    ports:
+      - "8000:8000"
+    environment:
+      - API_BASE_URL=${API_BASE_URL:-https://api.coingecko.com/api/v3}
+      - USE_MOCK=${USE_MOCK:-false}
+      - COINS=${COINS:-bitcoin,ethereum}
+      - PRICES_CSV=${PRICES_CSV:-data/prices/crypto_prices.csv}
+      - ALERTS_JSON=${ALERTS_JSON:-data/alerts/price_alerts.json}
+      - PLOTS_DIR=${PLOTS_DIR:-data/plots}
+      - FLASK_SECRET_KEY=${FLASK_SECRET_KEY:-dev-secret}
+    volumes:
+      - .:/app
+      - prices_data:/app/data/prices
+      - alerts_data:/app/data/alerts
+      - plots_data:/app/data/plots
+    command: ["python", "-m", "flask", "run", "--host=0.0.0.0", "--port=8000"]
+volumes:
+  prices_data:
+  alerts_data:
+  plots_data:
