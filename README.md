@@ -2,7 +2,8 @@
 
 Lightweight, OOP-style crypto price tracker for data analysis using CoinGecko API. Saves daily prices to CSV, plots 7-day moving averages, and raises simple alerts on 10% drops.
 
-**Websire:** https://crypto-price-tracker-xj94.onrender.com
+**Websire:** https://crypto-price-tracker-xj94.onrender.com <br>
+**Project Pitch:** https://colab.research.google.com/drive/1rCnjp3R66czM13gFE8nIDWWglAVk-hFu?usp=sharing
 
 ## Features
 - Fetch BTC/ETH prices (public API; no key required)
